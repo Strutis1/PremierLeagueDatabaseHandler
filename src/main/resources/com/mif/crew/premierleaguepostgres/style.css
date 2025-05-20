@@ -1,0 +1,59 @@
+.tab-pane {
+    -fx-background-color: #002800;
+}
+
+.tab-pane .tab-header-area {
+    -fx-background-color: #002800;
+}
+
+.tab-pane .tab-content-area {
+    -fx-background-color: #002800;
+}
+
+.tab-pane .tab-header-area .tab-header-background {
+    -fx-background-color: #004000;
+}
+
+.tab-pane .tab {
+    -fx-background-color: #002800;
+    -fx-border-color: transparent;
+    -fx-background-insets: 0;
+    -fx-padding: 6 12 6 12;
+}
+
+.tab-pane .tab:hover {
+    -fx-background-color: #004000;
+}
+
+.tab-pane .tab:selected {
+    -fx-background-color: #004400;
+    -fx-border-color: white;
+}
+
+.tab-pane .tab-label {
+    -fx-text-fill: white;
+}
+
+.text-area {
+    -fx-control-inner-background: #002800;
+    -fx-text-fill: white;
+    -fx-highlight-fill: white;
+    -fx-highlight-text-fill: #002800;
+    -fx-prompt-text-fill: lightgray;
+}
+
+.button, .list-view, .text-area {
+    -fx-background-radius: 6;
+}
+.button {
+    -fx-background-color: white;
+    -fx-text-fill: #002800;
+    -fx-background-radius: 6;
+    -fx-border-radius: 6;
+    -fx-font-weight: bold;
+}
+
+.button:hover {
+    -fx-background-color: #e0e0e0;
+    -fx-cursor: hand;
+}
