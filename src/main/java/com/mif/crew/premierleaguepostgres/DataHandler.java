@@ -14,14 +14,19 @@ public final class DataHandler {
     private Integer selectedSeason;
 
     private ObservableList<String> selectedTeam;
-
     private TableView<ObservableList<String>> standingsTable;
+
+    private ObservableList<String> selectedMatch;
+    private TableView<ObservableList<String>> matchesTable;
+
+    private ObservableList<String> selectedPlayer;
+    private TableView<ObservableList<String>> playersTable;
+
+
 
     private final static DataHandler INSTANCE = new DataHandler();
 
     private DataHandler() {}
-
-
 
     public static DataHandler getInstance() {
         return INSTANCE;
@@ -57,6 +62,38 @@ public final class DataHandler {
 
     public void setStandingsTable(TableView<ObservableList<String>> table) {
         this.standingsTable = table;
+    }
+
+    public ObservableList<String> getSelectedMatch() {
+        return selectedMatch;
+    }
+
+    public void setSelectedMatch(ObservableList<String> selectedMatch) {
+        this.selectedMatch = selectedMatch;
+    }
+
+    public TableView<ObservableList<String>> getMatchesTable() {
+        return matchesTable;
+    }
+
+    public void setMatchesTable(TableView<ObservableList<String>> matchesTable) {
+        this.matchesTable = matchesTable;
+    }
+
+    public ObservableList<String> getSelectedPlayer() {
+        return selectedPlayer;
+    }
+
+    public void setSelectedPlayer(ObservableList<String> selectedPlayer) {
+        this.selectedPlayer = selectedPlayer;
+    }
+
+    public TableView<ObservableList<String>> getPlayersTable() {
+        return playersTable;
+    }
+
+    public void setPlayersTable(TableView<ObservableList<String>> playersTable) {
+        this.playersTable = playersTable;
     }
 }
 

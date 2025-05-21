@@ -221,7 +221,7 @@
                                           </TextField>
                                           <HBox alignment="CENTER" prefHeight="100.0" prefWidth="200.0">
                                              <children>
-                                                <Button fx:id="addSeasonButton1" prefHeight="50.0" prefWidth="114.0" style="-fx-background-color: white; -fx-font-weight: bold; -fx-font-size: 18;" text="Register">
+                                                <Button fx:id="registerMatchButton" prefHeight="50.0" prefWidth="114.0" style="-fx-background-color: white; -fx-font-weight: bold; -fx-font-size: 18;" text="Register">
                                                    <font>
                                                       <Font size="18.0" />
                                                    </font>
@@ -245,17 +245,31 @@
                                           <Label style="-fx-text-fill:#002800; -fx-font-weight: bold;" text="PLAYERS" BorderPane.alignment="CENTER" />
                                        </center>
                                     </BorderPane>
-                                    <VBox fx:id="playersPanel" layoutX="17.0" layoutY="73.0" prefHeight="200.0" prefWidth="100.0" AnchorPane.bottomAnchor="0.0" AnchorPane.leftAnchor="0.0" AnchorPane.rightAnchor="0.0" AnchorPane.topAnchor="40.0" />
+                                    <VBox fx:id="playersPanel" layoutX="17.0" layoutY="73.0" prefHeight="200.0" prefWidth="100.0" style="-fx-background-color: #002800;" AnchorPane.bottomAnchor="40.0" AnchorPane.leftAnchor="0.0" AnchorPane.rightAnchor="0.0" AnchorPane.topAnchor="40.0" />
+                                    <HBox alignment="CENTER" layoutX="20.0" layoutY="516.0" prefHeight="52.0" prefWidth="627.0" AnchorPane.bottomAnchor="0.0" AnchorPane.leftAnchor="0.0" AnchorPane.rightAnchor="0.0">
+                                       <children>
+                                          <Button fx:id="changeStatsButton" prefHeight="39.0" prefWidth="628.0" style="-fx-background-color: white; -fx-font-weight: bold; -fx-border-color: #004000;" text="Change player's stats" HBox.hgrow="ALWAYS">
+                                             <HBox.margin>
+                                                <Insets bottom="10.0" />
+                                             </HBox.margin>
+                                          </Button>
+                                          <Button fx:id="deletePlayerButton" disable="true" prefHeight="39.0" prefWidth="628.0" style="-fx-background-color: white; -fx-font-weight: bold; -fx-border-color: #004000;" text="Delete selected player">
+                                             <HBox.margin>
+                                                <Insets bottom="10.0" />
+                                             </HBox.margin>
+                                          </Button>
+                                       </children>
+                                    </HBox>
                                  </children>
                               </AnchorPane>
                               <AnchorPane minHeight="0.0" minWidth="0.0" prefHeight="160.0" prefWidth="100.0">
                                  <children>
                                     <BorderPane prefHeight="40.0" prefWidth="200.0" style="-fx-background-color: white;" AnchorPane.leftAnchor="0.0" AnchorPane.rightAnchor="0.0" AnchorPane.topAnchor="0.0">
                                        <center>
-                                          <Label style="-fx-text-fill:#002800; -fx-font-weight: bold;" text="SIGN A NEW PLAYER" BorderPane.alignment="CENTER" />
+                                          <Label style="-fx-text-fill:#002800; -fx-font-weight: bold;" text="FILTERS" BorderPane.alignment="CENTER" />
                                        </center>
                                     </BorderPane>
-                                    <VBox fx:id="signPlayerPanel" layoutX="84.0" layoutY="158.0" prefHeight="200.0" prefWidth="100.0" AnchorPane.bottomAnchor="0.0" AnchorPane.leftAnchor="0.0" AnchorPane.rightAnchor="0.0" AnchorPane.topAnchor="40.0" />
+                                    <VBox fx:id="filterPlayerPanel" layoutX="84.0" layoutY="158.0" prefHeight="200.0" prefWidth="100.0" style="-fx-background-color: #002800;" AnchorPane.bottomAnchor="0.0" AnchorPane.leftAnchor="0.0" AnchorPane.rightAnchor="0.0" AnchorPane.topAnchor="40.0" />
                                  </children>
                               </AnchorPane>
                            </items>
@@ -264,7 +278,7 @@
                     </tabs>
                 </TabPane>
 
-                <HBox alignment="CENTER_LEFT" spacing="5.0">
+                <HBox alignment="CENTER_LEFT" spacing="5.0" VBox.vgrow="ALWAYS">
                     <padding>
                         <Insets bottom="3.0" left="3.0" right="3.0" top="3.0" />
                     </padding>

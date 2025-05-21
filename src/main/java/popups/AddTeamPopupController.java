@@ -69,7 +69,9 @@ public class AddTeamPopupController {
         ObservableList<String> selectedRow = candidateTable.getSelectionModel().getSelectedItem();
         if (selectedRow == null) return false;
 
-        String teamName = selectedRow.get(0);
+        String teamName = selectedRow.getFirst();
+
+        DatabaseLogger.log("Running query: " + query);
 
         try (PreparedStatement stmt = conn.prepareStatement(query)) {
             stmt.setString(1, teamName);
@@ -78,7 +80,6 @@ public class AddTeamPopupController {
 
             if (affected > 0) {
                 ObservableList<String> row = FXCollections.observableArrayList();
-                row.add(String.valueOf(season));
                 row.add(teamName);
                 row.add("0");
 

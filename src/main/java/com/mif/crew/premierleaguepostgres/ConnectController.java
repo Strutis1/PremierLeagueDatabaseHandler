@@ -71,9 +71,9 @@ public class ConnectController {
             controller.connectToDatabase(url, clientUsername.getText(), clientPassword.getText());
 
             Stage dbStage = new Stage();
-            Scene dbScene = new Scene(dbHandlerRoot, 900, 700);
+            Scene dbScene = new Scene(dbHandlerRoot, 1100, 800);
             dbScene.getStylesheets().add(getClass().getResource("style.css").toExternalForm());
-            dbStage.setTitle("Premier League 2008-2024");
+            dbStage.setTitle("Premier League");
             dbStage.setScene(dbScene);
             dbStage.show();
 

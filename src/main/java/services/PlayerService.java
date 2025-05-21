@@ -2,12 +2,10 @@ package services;
 
 import com.mif.crew.premierleaguepostgres.DataHandler;
 import helper.DatabaseLogger;
-import helper.IdNamePair;
 import javafx.beans.property.ReadOnlyStringWrapper;
 import javafx.collections.FXCollections;
 import javafx.collections.ObservableList;
 import javafx.scene.control.Label;
-import javafx.scene.control.ListView;
 import javafx.scene.control.TableColumn;
 import javafx.scene.control.TableView;
 import javafx.scene.layout.Priority;
@@ -16,15 +14,14 @@ import javafx.scene.layout.VBox;
 
 import java.sql.*;
 
-public class MatchService {
-
+public class PlayerService {
     private final Connection conn;
 
-    public MatchService(Connection conn) {
+    public PlayerService(Connection conn) {
         this.conn = conn;
     }
 
-    public void loadMatchTable(Integer season, VBox matchesPanel) {
+    public void loadPlayerTable(Integer season, VBox matchesPanel) {
         matchesPanel.getChildren().clear();
 
         if (conn == null) {
@@ -41,7 +38,7 @@ public class MatchService {
             stmt.setInt(1, season);
 
             try (ResultSet rs = stmt.executeQuery()) {
-                TableView<ObservableList<String>> table = buildMatchTable(rs);
+                TableView<ObservableList<String>> table = buildPlayerTable(rs);
                 matchesPanel.getChildren().add(table);
 
                 VBox.setVgrow(table, Priority.ALWAYS);
@@ -50,7 +47,7 @@ public class MatchService {
                     matchesPanel.getChildren().clear();
                     matchesPanel.getChildren().add(new Label("No data found for the selected season(s)."));
                 } else {
-                    configureMatchSelection(table);
+                    configurePlayerSelection(table);
                 }
             }
         } catch (SQLException e) {
@@ -59,12 +56,12 @@ public class MatchService {
         }
     }
 
-    private TableView<ObservableList<String>> buildMatchTable(ResultSet rs) throws SQLException {
+    private TableView<ObservableList<String>> buildPlayerTable(ResultSet rs) throws SQLException {
         TableView<ObservableList<String>> table = new TableView<>();
         table.setColumnResizePolicy(TableView.CONSTRAINED_RESIZE_POLICY);
         table.setPrefHeight(Region.USE_COMPUTED_SIZE);
         table.setMaxHeight(Double.MAX_VALUE);
-        DataHandler.getInstance().setMatchesTable(table);
+        DataHandler.getInstance().setStandingsTable(table);
 
         ResultSetMetaData meta = rs.getMetaData();
         int columnCount = meta.getColumnCount();
@@ -87,7 +84,7 @@ public class MatchService {
         return table;
     }
 
-    private void configureMatchSelection(
+    private void configurePlayerSelection(
             TableView<ObservableList<String>> table) {
         table.getSelectionModel().selectedItemProperty().addListener((obs, oldRow, newRow) -> {
             if (newRow != null) {

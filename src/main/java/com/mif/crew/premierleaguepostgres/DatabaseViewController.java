@@ -3,6 +3,9 @@ package com.mif.crew.premierleaguepostgres;
 import helper.DatabaseLogger;
 import helper.IdNamePair;
 import helper.QueryExecutor;
+import helper.Utilz;
+import javafx.beans.binding.BooleanBinding;
+import javafx.collections.FXCollections;
 import javafx.collections.ObservableList;
 import javafx.event.ActionEvent;
 import javafx.fxml.FXML;
@@ -16,18 +19,20 @@ import javafx.scene.layout.BorderPane;
 import javafx.scene.layout.VBox;
 import javafx.stage.Modality;
 import javafx.stage.Stage;
-import services.SeasonService;
-import services.SquadService;
-import services.StandingsService;
+import javafx.util.Pair;
+import services.*;
 
 import java.io.IOException;
 import java.sql.*;
+import java.time.LocalDate;
 
 public class DatabaseViewController {
 
     private StandingsService standingsService;
     private SquadService squadService;
     private SeasonService seasonsService;
+    private MatchService matchService;
+    private PlayerService playerService;
 
     @FXML
     private Button addManagerButton;
@@ -36,7 +41,7 @@ public class DatabaseViewController {
     private Button addSeasonButton;
 
     @FXML
-    private Button addSeasonButton1;
+    private Button registerMatchButton;
 
     @FXML
     private Button addTeamButton;
@@ -141,6 +146,8 @@ public class DatabaseViewController {
     private VBox createMatchPanel;
 
 
+
+
     private Connection conn;
 
 
@@ -150,11 +157,25 @@ public class DatabaseViewController {
 //        seasonListView.getSelectionModel().setSelectionMode(SelectionMode.MULTIPLE);
 //        playerList.getSelectionModel().setSelectionMode(SelectionMode.MULTIPLE);
         applySeasonButton.setOnAction(e -> {
-            ObservableList<Integer> selected = seasonListView.getSelectionModel().getSelectedItems();
-            if (!selected.isEmpty()) {
+            Integer selected = seasonListView.getSelectionModel().getSelectedItem();
+            if (selected != null) {
                 DataHandler.getInstance().setSelectedSeason(seasonListView.getSelectionModel().getSelectedItem());
-                createMatchPanel.setVisible(false);
+                createMatchPanel.setDisable(false);
                 refreshCurrentTab();
+                fillTeams(homeTeamCombo, selected);
+                fillTeams(awayTeamCombo,selected);
+                fillWeeks(matchWeekCombo, selected);
+
+                Pair<LocalDate, LocalDate> range = getSeasonDateRange(selected);
+                if (range != null) {
+                    matchDatePicker.setDayCellFactory(picker -> new DateCell() {
+                        @Override
+                        public void updateItem(LocalDate date, boolean empty) {
+                            super.updateItem(date, empty);
+                            setDisable(empty || date.isBefore(range.getKey()) || date.isAfter(range.getValue()));
+                        }
+                    });
+                }
             } else {
                 log("Please select at least one season.");
             }
@@ -220,12 +241,152 @@ public class DatabaseViewController {
                 seasonListView.getItems().remove(selected);
         });
 
+        BooleanBinding allFieldsFilled =
+                homeTeamCombo.valueProperty().isNotNull()
+                        .and(awayTeamCombo.valueProperty().isNotNull())
+                        .and(matchWeekCombo.valueProperty().isNotNull())
+                        .and(matchDatePicker.valueProperty().isNotNull())
+                        .and(homeGoalsText.textProperty().isNotEmpty())
+                        .and(awayGoalsText.textProperty().isNotEmpty());
+
+        registerMatchButton.disableProperty().bind(allFieldsFilled.not());
+
+        registerMatchButton.setOnAction(this::registerMatch);
+
+        deleteMatchButton.setOnAction(this::deleteMatch);
+
         deleteTeamButton.setOnAction(this::deleteTeam);
+
 
         addTeamButton.setOnAction(e -> popupHandle("TEAM"));
         addManagerButton.setOnAction(e -> popupHandle("MANAGER"));
         signPlayerButton.setOnAction(e ->  popupHandle("PLAYER"));
+        changeMatchButton.setOnAction(e -> popupHandle("MATCH"));
 
+    }
+
+    private void registerMatch(ActionEvent actionEvent) {
+        String query = "INSERT INTO PremierLeague.matches (home_team_Name, away_team_name, week, match_date, home_goals, away_goals, Season_End_Year) VALUES (?, ?, ?, ?, ?, ?, ?)";
+        Connection conn = DataHandler.getInstance().getConnection();
+        int season = DataHandler.getInstance().getSelectedSeason();
+
+
+
+        try (PreparedStatement stmt = conn.prepareStatement(query, Statement.RETURN_GENERATED_KEYS)) {
+            stmt.setString(1, homeTeamCombo.getValue());
+            stmt.setString(2, awayTeamCombo.getValue());
+            stmt.setInt(3, matchWeekCombo.getValue());
+            stmt.setDate(4, Date.valueOf(matchDatePicker.getValue()));
+            stmt.setInt(5, Integer.parseInt(homeGoalsText.getText()));
+            stmt.setInt(6, Integer.parseInt(awayGoalsText.getText()));
+            stmt.setInt(7, season);
+
+            ResultSet generatedKeys = stmt.getGeneratedKeys();
+            Integer matchId = null;
+            if (generatedKeys.next()) {
+                matchId = generatedKeys.getInt(1);
+            }
+
+            int affected = stmt.executeUpdate();
+
+            if (affected > 0) {
+                ObservableList<String> row = FXCollections.observableArrayList();
+                if(matchId == null){
+                    DatabaseLogger.log("Couldn't generate a match id for the new match");
+                }
+                row.add(String.valueOf(matchId));
+                row.add(homeTeamCombo.getValue());
+                row.add(awayTeamCombo.getValue());
+                row.add(String.valueOf(matchWeekCombo.getValue()));
+                row.add(String.valueOf(matchDatePicker.getValue()));
+                row.add(homeGoalsText.getText());
+                row.add(awayGoalsText.getText());
+                row.add(String.valueOf(season));
+
+                DataHandler.getInstance().getMatchesTable().getItems().add(row);
+                DatabaseLogger.log("Match added successfully");
+            }
+        } catch (SQLException e) {
+            DatabaseLogger.log("Failed to insert into TeamSeason: " + e.getMessage());
+        }
+    }
+
+    private void fillWeeks(ComboBox<Integer> matchWeekCombo, Integer selected) {
+        if (conn == null) {
+            DatabaseLogger.log("No database connection.");
+            return;
+        }
+
+        String query = "SELECT count(distinct team_name) FROM premierleague.teamseason " +
+                "WHERE season_end_year = ?";
+
+        DatabaseLogger.log("Running query: " + query);
+
+        try (PreparedStatement stmt = conn.prepareStatement(query)) {
+            stmt.setInt(1, selected);
+
+            try (ResultSet rs = stmt.executeQuery()) {
+                if (rs.next()) {
+                    int teamCount = rs.getInt(1);
+                    matchWeekCombo.getItems().clear();
+                    Utilz.fillIntegerComboBox(matchWeekCombo, 1, (teamCount - 1) * 2);
+                }
+            }
+        } catch (SQLException e) {
+            DatabaseLogger.log("Failed to load data: " + e.getMessage());
+            matchesPanel.getChildren().add(new Label("Failed to load data."));
+        }
+
+    }
+
+    private void fillTeams(ComboBox<String> teamCombo, Integer selected) {
+        if (conn == null) {
+            DatabaseLogger.log("No database connection.");
+            return;
+        }
+
+        String query = "SELECT team_name FROM premierleague.team " +
+                "WHERE season_end_year = ?";
+
+        DatabaseLogger.log("Running query: " + query);
+
+        try (PreparedStatement stmt = conn.prepareStatement(query)) {
+            stmt.setInt(1, selected);
+
+            try (ResultSet rs = stmt.executeQuery()) {
+                ObservableList<String> teams = FXCollections.observableArrayList();
+                while (rs.next()) {
+                    teams.add(rs.getString("team_name"));
+                }
+                teamCombo.setItems(teams);
+            }
+        } catch (SQLException e) {
+            DatabaseLogger.log("Failed to load data: " + e.getMessage());
+            matchesPanel.getChildren().add(new Label("Failed to load data."));
+        }
+    }
+
+    private void deleteMatch(ActionEvent actionEvent) {
+        TableView<ObservableList<String>> standingsTable = DataHandler.getInstance().getStandingsTable();
+        ObservableList<String> selectedRow = standingsTable.getSelectionModel().getSelectedItem();
+
+        int matchId = Integer.parseInt(selectedRow.getFirst());
+
+        String query = "DELETE FROM PremierLeague.Matches WHERE matchId = ?";
+
+        try (PreparedStatement stmt = conn.prepareStatement(query)) {
+            stmt.setInt(1, matchId);
+
+            int affected = stmt.executeUpdate();
+            if (affected > 0) {
+                standingsTable.getItems().remove(selectedRow);
+                DatabaseLogger.log("Deleted match" + matchId);
+            } else {
+                DatabaseLogger.log("Team not found or already deleted.");
+            }
+        } catch (SQLException e) {
+            DatabaseLogger.log("Error deleting team from TeamSeason: " + e.getMessage());
+        }
     }
 
     private void deleteTeam(ActionEvent actionEvent) {
@@ -258,6 +419,7 @@ public class DatabaseViewController {
             case "TEAM" -> "/popups/add_team_popup.fxml";
             case "MANAGER" -> "/popups/add_manager_popup.fxml";
             case "PLAYER" -> "/popups/sign_player_popup.fxml";
+            case "MATCH" -> "/popups/alter_match_popup.fxml";
             default -> null;
         };
 
@@ -271,7 +433,7 @@ public class DatabaseViewController {
                 stage.initModality(Modality.APPLICATION_MODAL);
                 stage.showAndWait();
             } catch (IOException e) {
-                e.printStackTrace();
+                DatabaseLogger.log(e.getMessage());
             }
         }
     }
@@ -286,6 +448,9 @@ public class DatabaseViewController {
             standingsService = new StandingsService(conn);
             squadService = new SquadService(conn);
             seasonsService = new SeasonService(conn);
+            matchService = new MatchService(conn);
+            playerService = new PlayerService(conn);
+
 
 
             seasonsService.loadSeasons(seasonListView);
@@ -344,19 +509,35 @@ public class DatabaseViewController {
 
 
     public void loadMatchesView() {
-        squadPanel.getChildren().setAll(createMatchDetailsPanel());
-        configureTableForMatches();
+        Integer season = seasonListView.getSelectionModel().getSelectedItem();
+
+        if (season == null) {
+            standingsPanel.getChildren().setAll(new Label("Please select one of the seasons."));
+            return;
+        }
+
+        matchService.loadMatchTable(season, matchesPanel);
+
+        TableView<ObservableList<String>> matchesTable = DataHandler.getInstance().getMatchesTable();
+        deleteMatchButton.setDisable(true);
+        matchesTable.getSelectionModel().selectedItemProperty().addListener((obs, oldSel, newSel) -> {
+            deleteMatchButton.setDisable(newSel == null);
+        });
     }
 
-    private void configureTableForMatches() {
-
-    }
-
-    private Node createMatchDetailsPanel() {
-        return null;
-    }
-
-    private Node createMatchFilters() {
+    private Pair<LocalDate, LocalDate> getSeasonDateRange(int seasonId) {
+        String query = "SELECT start_date, end_date FROM premierleague.season WHERE season_end_year = ?";
+        try (PreparedStatement stmt = DataHandler.getInstance().getConnection().prepareStatement(query)) {
+            stmt.setInt(1, seasonId);
+            ResultSet rs = stmt.executeQuery();
+            if (rs.next()) {
+                LocalDate start = rs.getDate("start_date").toLocalDate();
+                LocalDate end = rs.getDate("end_date").toLocalDate();
+                return new Pair<>(start, end);
+            }
+        } catch (SQLException e) {
+            DatabaseLogger.log("Failed to fetch season date range: " + e.getMessage());
+        }
         return null;
     }
 
@@ -374,9 +555,6 @@ public class DatabaseViewController {
         return null;
     }
 
-    private Node createPlayerFilters() {
-        return null;
-    }
 
     public void refreshCurrentTab() {
         Tab selectedTab = tableTabs.getSelectionModel().getSelectedItem();
