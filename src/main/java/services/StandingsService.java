@@ -33,8 +33,9 @@ public class StandingsService {
             return;
         }
 
-        String query = "SELECT team_name, points FROM premierleague.season_standings " +
-                "WHERE season_end_year = ? ORDER BY points DESC";
+        String query = "select team_name, played, wins, draws, losses, goals_for, goals_against " +
+                "from premierleague.teamseasonstats " +
+                "where season_end_year = ?";
 
         DatabaseLogger.log("Running query: " + query);
 

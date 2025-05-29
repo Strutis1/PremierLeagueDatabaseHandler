@@ -12,11 +12,6 @@ public class Utilz {
         }
     }
 
-    public static void fillStringComboBox(ComboBox<String> comboBox, String... values) {
-        comboBox.getItems().clear();
-        comboBox.getItems().addAll(values);
-    }
-
     public static boolean isPositiveNumber(TextField textField) {
         String text = textField.getText().trim();
         return text.matches("^[1-9]\\d*$");

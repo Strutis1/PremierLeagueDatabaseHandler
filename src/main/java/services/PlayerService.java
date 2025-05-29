@@ -21,7 +21,8 @@ public class PlayerService {
         this.conn = conn;
     }
 
-    public void loadPlayerTable(Integer season, VBox matchesPanel) {
+    public void loadPlayerTable(Integer season, VBox matchesPanel,
+                                String teamFilter, String positionFilter, String nameFilter) {
         matchesPanel.getChildren().clear();
 
         if (conn == null) {
@@ -29,23 +30,42 @@ public class PlayerService {
             return;
         }
 
-        String query = "SELECT matchid, week, match_date, home_team_name, home_goals, away_goals, away_team_name, result FROM premierleague.matches " +
-                "WHERE season_end_year = ? ORDER BY match_date DESC";
+        StringBuilder queryBuilder = new StringBuilder("""
+        SELECT p.playerid, p.full_name, pos.position, p.team_name,
+               p.goals, p.assists, p.appearances, p.minutes_played
+        FROM premierleague.player AS p
+        JOIN premierleague.playerposition AS pos ON p.playerid = pos.playerid
+        WHERE p.season_end_year = ?
+        """);
 
+        if (teamFilter != null) {
+            queryBuilder.append(" AND p.team_name = ?");
+        }
+        if (positionFilter != null) {
+            queryBuilder.append(" AND pos.position = ?");
+        }
+        if (nameFilter != null) {
+            queryBuilder.append(" AND LOWER(p.full_name) LIKE ?");
+        }
+
+        String query = queryBuilder.toString();
         DatabaseLogger.log("Running query: " + query);
 
         try (PreparedStatement stmt = conn.prepareStatement(query)) {
-            stmt.setInt(1, season);
+            int index = 1;
+            stmt.setInt(index++, season);
+            if (teamFilter != null) stmt.setString(index++, teamFilter);
+            if (positionFilter != null) stmt.setString(index++, positionFilter);
+            if (nameFilter != null) stmt.setString(index++, "%" + nameFilter.toLowerCase() + "%");
 
             try (ResultSet rs = stmt.executeQuery()) {
                 TableView<ObservableList<String>> table = buildPlayerTable(rs);
                 matchesPanel.getChildren().add(table);
-
                 VBox.setVgrow(table, Priority.ALWAYS);
 
                 if (table.getItems().isEmpty()) {
                     matchesPanel.getChildren().clear();
-                    matchesPanel.getChildren().add(new Label("No data found for the selected season(s)."));
+                    matchesPanel.getChildren().add(new Label("No data found for the selected filters."));
                 } else {
                     configurePlayerSelection(table);
                 }
@@ -56,12 +76,13 @@ public class PlayerService {
         }
     }
 
+
     private TableView<ObservableList<String>> buildPlayerTable(ResultSet rs) throws SQLException {
         TableView<ObservableList<String>> table = new TableView<>();
         table.setColumnResizePolicy(TableView.CONSTRAINED_RESIZE_POLICY);
         table.setPrefHeight(Region.USE_COMPUTED_SIZE);
         table.setMaxHeight(Double.MAX_VALUE);
-        DataHandler.getInstance().setStandingsTable(table);
+        DataHandler.getInstance().setPlayersTable(table);
 
         ResultSetMetaData meta = rs.getMetaData();
         int columnCount = meta.getColumnCount();
@@ -84,11 +105,10 @@ public class PlayerService {
         return table;
     }
 
-    private void configurePlayerSelection(
-            TableView<ObservableList<String>> table) {
+    private void configurePlayerSelection(TableView<ObservableList<String>> table) {
         table.getSelectionModel().selectedItemProperty().addListener((obs, oldRow, newRow) -> {
             if (newRow != null) {
-                DataHandler.getInstance().setSelectedMatch(newRow);
+                DataHandler.getInstance().setSelectedPlayer(newRow);
             }
         });
     }

@@ -7,9 +7,7 @@ import javafx.stage.Stage;
 
 import java.io.IOException;
 
-//TODO make addition possible(players, managers)
-//TODO continue with tabs(matches, players)
-//still need search/filter, real transaction(player/manager transfer), id-> name(manager signing), some sort of join
+
 public class PremierLeagueDatabase extends Application {
     @Override
     public void start(Stage stage) throws IOException {

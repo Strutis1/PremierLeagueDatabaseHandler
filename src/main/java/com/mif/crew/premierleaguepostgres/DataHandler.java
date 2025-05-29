@@ -22,6 +22,8 @@ public final class DataHandler {
     private ObservableList<String> selectedPlayer;
     private TableView<ObservableList<String>> playersTable;
 
+    private DatabaseViewController mainController;
+
 
 
     private final static DataHandler INSTANCE = new DataHandler();
@@ -94,6 +96,14 @@ public final class DataHandler {
 
     public void setPlayersTable(TableView<ObservableList<String>> playersTable) {
         this.playersTable = playersTable;
+    }
+
+    public DatabaseViewController getMainController() {
+        return mainController;
+    }
+
+    public void setMainController(DatabaseViewController mainController) {
+        this.mainController = mainController;
     }
 }
 

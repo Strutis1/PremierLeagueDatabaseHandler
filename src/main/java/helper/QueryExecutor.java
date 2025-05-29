@@ -58,12 +58,16 @@ public class QueryExecutor {
             }
             DatabaseLogger.log("Running DDL/DML query: " + query);
             int affectedRows = stmt.executeUpdate();
-            return affectedRows > 0;
+            if(affectedRows > 0);{
+                stmt.executeUpdate();
+                return true;
+            }
         } catch (SQLException e) {
             DatabaseLogger.log("DDL/DML query failed: " + e.getMessage());
             return false;
         }
     }
+
 
 
     public static List<IdNamePair> runIntStringQuery(Connection conn, String query, Object... params) {

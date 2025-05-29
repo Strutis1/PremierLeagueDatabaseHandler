@@ -79,11 +79,7 @@ public class AddTeamPopupController {
             int affected = stmt.executeUpdate();
 
             if (affected > 0) {
-                ObservableList<String> row = FXCollections.observableArrayList();
-                row.add(teamName);
-                row.add("0");
-
-                DataHandler.getInstance().getStandingsTable().getItems().add(row);
+                DataHandler.getInstance().getMainController().refreshCurrentTab();
                 return true;
             }
         } catch (SQLException e) {
